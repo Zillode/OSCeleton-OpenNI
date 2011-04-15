@@ -1159,7 +1159,7 @@ int main(int argc, char **argv) {
 		nRetVal = gestureGenerator.RegisterGestureCallbacks(Gesture_Recognized, Gesture_Process, NULL, hGestureCallbacks);
 		nRetVal = handsGenerator.RegisterHandCallbacks(new_hand, update_hand, lost_hand, NULL, hHandsCallbacks);
 		if (filter)
-			handsGenerator.SetSmoothing(0.2);
+			handsGenerator.SetSmoothing(0.05);
 	}
 	else {
 		nRetVal = context.FindExistingNode(XN_NODE_TYPE_USER, userGenerator);
