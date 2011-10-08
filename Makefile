@@ -4,7 +4,7 @@ liblo:
 	cd liblo-0.26-modified;./configure;make
 
 osceleton: liblo
-	g++ src/OSCeleton.cpp src/viewer.cpp -O3 -Wno-write-strings -Iliblo-0.26-modified -I/usr/X11/include -I/usr/include/ni -lOpenNI -lstdc++ -L/usr/X11/lib -lGL -lGLU -lglut -lpthread liblo-0.26-modified/src/.libs/*.o -o osceleton
+	g++ src/OSCeleton.cpp src/viewer.cpp -O3 -Wno-write-strings -Iliblo-0.26-modified -I/usr/X11/include -I/usr/include/ni -I/usr/include/openni -lOpenNI -lstdc++ -L/usr/X11/lib -lGL -lGLU -lglut -lpthread liblo-0.26-modified/src/.libs/*.o -o osceleton
 
 osc2file: liblo
 	g++ osc_tools/osc2file.c -O3 -Wno-write-strings -Iliblo-0.26-modified -lpthread liblo-0.26-modified/src/.libs/*.o -o osc2file
