@@ -20,6 +20,8 @@
 
 #include <cstdio>
 #include <csignal>
+#include <iostream>
+#include <fstream>
 
 #include <XnCppWrapper.h>
 
@@ -70,8 +72,16 @@ bool sendRot = false;
 bool filter = false;
 bool preview = false;
 bool raw = false;
+bool filterLowConfidence = false;
+bool realworld = false;
+bool debugFacts = false;
+bool debugCSV = false;
 bool sendOrient = false;
 int nDimensions = 3;
+
+char outputFileStr[1024];
+bool outputFileOpen = false;
+std::ofstream outputFile;
 
 void (*oscFunc)(lo_bundle*, char*) = NULL;
 
@@ -98,7 +108,7 @@ void XN_CALLBACK_TYPE Gesture_Process(xn::GestureGenerator& generator, const XnC
 }
 
 //hand callbacks new_hand, update_hand, lost_hand
-void XN_CALLBACK_TYPE new_hand(xn::HandsGenerator &generator, XnUserID nId, const XnPoint3D *pPosition, XnFloat fTime, void *pCookie) {
+void XN_CALLBACK_TYPE new_hand(xn::HandsGenerator &generator, XnUserID nId, const XnPoint3D *pPosition, XnFloat		, void *pCookie) {
 	printf("New Hand %d\n", nId);
 	if (kitchenMode) return;
 
@@ -184,14 +194,64 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 
 	userID = player;
 
+	if (filterLowConfidence && posConfidence < 0.5) {
+		return 0;
+	}
+
 	if (!raw)
 	{
 	  jointCoords[0] = off_x + (mult_x * (1280 - jointTrans.position.position.X) / 2560); //Normalize coords to 0..1 interval
 	  jointCoords[1] = off_y + (mult_y * (960 - jointTrans.position.position.Y) / 1920); //Normalize coords to 0..1 interval
 	  jointCoords[2] = off_z + (mult_z * jointTrans.position.position.Z * 7.8125 / 10000); //Normalize coords to 0..7.8125 interval
 	}
+	else if (realworld)
+	{
+		XnPoint3D realwordPoint;
+		realwordPoint.X = 0; realwordPoint.Y = 0; realwordPoint.Z = 0;
+		depth.ConvertProjectiveToRealWorld(1, &jointTrans.position.position, &realwordPoint); 
+	  
+	    jointCoords[0] = realwordPoint.X;
+	    jointCoords[1] = realwordPoint.Y;
+	    jointCoords[2] = realwordPoint.Z;
+		
+		if (debugCSV) {
+			sprintf(outputFileStr, "%d,%f,%f,%f,%f,%f,%,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				jointTrans.orientation.orientation.elements[0],
+				jointTrans.orientation.orientation.elements[1],
+				jointTrans.orientation.orientation.elements[2],
+				jointTrans.orientation.orientation.elements[3],
+				jointTrans.orientation.orientation.elements[4],
+				jointTrans.orientation.orientation.elements[5],
+				jointTrans.orientation.orientation.elements[6],
+				jointTrans.orientation.orientation.elements[7],
+				jointTrans.orientation.orientation.elements[8],
+				0.0f);
+		}
+		if (debugFacts) {
+			sprintf(outputFileStr, "(OSC_Joint (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f)  (on %f))\n",
+				eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				jointTrans.orientation.orientation.elements[0],
+				jointTrans.orientation.orientation.elements[1],
+				jointTrans.orientation.orientation.elements[2],
+				jointTrans.orientation.orientation.elements[3],
+				jointTrans.orientation.orientation.elements[4],
+				jointTrans.orientation.orientation.elements[5],
+				jointTrans.orientation.orientation.elements[6],
+				jointTrans.orientation.orientation.elements[7],
+				jointTrans.orientation.orientation.elements[8],
+				0.0f);
+		}
+		if (debugCSV || debugFacts) {
+			if (!outputFileOpen) {
+				outputFile.open("outputFile.txt");
+				outputFileOpen = true;
+			}
+			outputFile << outputFileStr;
+		}
+	}
 	else
 	{
+	  
 	  jointCoords[0] = jointTrans.position.position.X;
 	  jointCoords[1] = jointTrans.position.position.Y;
 	  jointCoords[2] = jointTrans.position.position.Z;
@@ -327,16 +387,50 @@ void sendHandOSC() {
 
 	lo_bundle bundle = lo_bundle_new(LO_TT_IMMEDIATE);
 
-	if (!raw) {
+	if (!raw)
+	{
 	    jointCoords[0] = off_x + (mult_x * (480 - handCoords[0]) / 960); //Normalize coords to 0..1 interval
 	    jointCoords[1] = off_y + (mult_y * (320 - handCoords[1]) / 640); //Normalize coords to 0..1 interval
 	    jointCoords[2] = off_z + (mult_z * handCoords[2] * 7.8125 / 10000); //Normalize coords to 0..7.8125 interval
-	} else {
+	}
+	else if (realworld)
+	{
+		XnPoint3D realwordPoint;
+		XnPoint3D projectivePoint;
+		projectivePoint.X = handCoords[0];
+		projectivePoint.Y = handCoords[1];
+		projectivePoint.Z = handCoords[2];
+		realwordPoint.X = 0; realwordPoint.Y = 0; realwordPoint.Z = 0;
+		depth.ConvertProjectiveToRealWorld(1, &projectivePoint, &realwordPoint); 
+	  
+	    jointCoords[0] = realwordPoint.X;
+	    jointCoords[1] = realwordPoint.Y;
+	    jointCoords[2] = realwordPoint.Z;
+		
+		if (debugCSV) {
+			sprintf(outputFileStr, "%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 0.0f);
+		}
+		if (debugFacts) {
+			sprintf(outputFileStr, "(OSC_Hand (x %f) (y %f) (z %f) (on %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 0.0f);
+		}
+		
+		if (debugCSV || debugFacts) {
+			if (!outputFileOpen) {
+				outputFile.open("outputFile.txt");
+				outputFileOpen = true;
+			}
+			outputFile << outputFileStr;
+		}
+	}
+	else
+	{
 	    jointCoords[0] = handCoords[0];
 	    jointCoords[1] = handCoords[1];
 	    jointCoords[2] = handCoords[2];
 	}
-	oscFunc(&bundle, "l_hand");
+
+
+	oscFunc(&bundle, "s_hand");
 	lo_send_bundle(addr, bundle);
 
 	printf("hand %.3f %.3f     \r", jointCoords[0], jointCoords[1]);
@@ -634,6 +728,12 @@ int main(int argc, char **argv) {
 		case 'r':
 			mirrorMode = false;
 			break;
+		case 'c':
+			debugCSV = true;
+			break;
+		case 'd':
+			debugFacts = true;
+			break;
         case 'x': //Set multipliers
 			switch(argv[arg][2]) {
 			case 'r': // turn on raw mode
@@ -642,11 +742,37 @@ int main(int argc, char **argv) {
             case 't': // send joint orientations
 				sendOrient = true;
 				break;
+			case 'f': // turn on filtering on low confidence values
+				filterLowConfidence = true;
+				break;
+			case 'w': // turn on real-world coordinates
+				realworld = true;
+				break;
 			case 'd': // turn on default options
 				raw = true;
 				preview = true;
 				sendOrient = true;
 				mirrorMode = false;
+				filterLowConfidence = false;
+				realworld = false;
+				oscFunc = &genQCMsg;
+				break;
+			case 'g': // turn on default options for Midas
+				raw = true;
+				preview = true;
+				sendOrient = true;
+				mirrorMode = false;
+				filterLowConfidence = true;
+				realworld = true;
+				oscFunc = &genQCMsg;
+				break;
+			case 'b': // turn on 'background' options for Midas
+				raw = true;
+				preview = false;
+				sendOrient = true;
+				mirrorMode = false;
+				filterLowConfidence = true;
+				realworld = true;
 				oscFunc = &genQCMsg;
 				break;
 			default:

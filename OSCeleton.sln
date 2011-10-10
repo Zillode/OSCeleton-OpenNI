@@ -1,12 +1,9 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OSCeleton", "src\OSCeleton.vcproj", "{380A9355-E839-4F55-98B1-B33D0CCA4340}"
-	ProjectSection(ProjectDependencies) = postProject
-		{FB8CF783-12C2-AD48-B0E9-DA7DF5EB719B} = {FB8CF783-12C2-AD48-B0E9-DA7DF5EB719B}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "OSCeleton", "src\OSCeleton.vcxproj", "{380A9355-E839-4F55-98B1-B33D0CCA4340}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "liblo", "liblo-0.26-modified\build\vs2008\liblo.vcproj", "{FB8CF783-12C2-AD48-B0E9-DA7DF5EB719B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "liblo", "liblo-0.26-modified\build\vs2008\liblo.vcxproj", "{FB8CF783-12C2-AD48-B0E9-DA7DF5EB719B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
