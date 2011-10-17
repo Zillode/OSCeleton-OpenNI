@@ -190,3 +190,10 @@ Example (torso of user 4):
 
 ### -xd
 Runs the program with a number of options enabled by default: -xr -xt -p -w -r
+
+
+OSCeleton-Midas
+=========
+Runs the program with the default options for the Midas-Mudra framework.
+OSCeleton -xg (with video)
+OSCeleton -xd (in background mode)
