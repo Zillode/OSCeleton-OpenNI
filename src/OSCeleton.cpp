@@ -215,7 +215,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "OSC_Joint,%d,%f,%f,%f,%f,%f,%,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+			sprintf(outputFileStr, "OSC_Joint,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
 				jointTrans.orientation.orientation.elements[2],
