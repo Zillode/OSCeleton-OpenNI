@@ -30,6 +30,7 @@
 #include "common.h"
 
 
+#define MIDAS_ENABLED 1
 
 char *ADDRESS = "127.0.0.1";
 char *PORT = "7110";
@@ -605,6 +606,16 @@ void main_loop() {
 }
 
 
+void set_midas_options() {
+	raw = true;
+	preview = false;
+	sendOrient = true;
+	mirrorMode = false;
+	filterLowConfidence = true;
+	realworld = true;
+	oscFunc = &genQCMsg;	
+}
+
 
 int main(int argc, char **argv) {
 	printf("Initializing...\n");
@@ -617,6 +628,10 @@ int main(int argc, char **argv) {
 	xn::Recorder recorder;
 
 	context.Init();
+
+	if (MIDAS_ENABLED) {
+		set_midas_options();
+	}
 
 	while ((arg < argc) && (argv[arg][0] == '-')) {
 		switch (argv[arg][1]) {
@@ -764,22 +779,12 @@ int main(int argc, char **argv) {
 				oscFunc = &genQCMsg;
 				break;
 			case 'g': // turn on default options for Midas
-				raw = true;
+				set_midas_options();
 				preview = true;
-				sendOrient = true;
-				mirrorMode = false;
-				filterLowConfidence = true;
-				realworld = true;
-				oscFunc = &genQCMsg;
 				break;
 			case 'b': // turn on 'background' options for Midas
-				raw = true;
+				set_midas_options();
 				preview = false;
-				sendOrient = true;
-				mirrorMode = false;
-				filterLowConfidence = true;
-				realworld = true;
-				oscFunc = &genQCMsg;
 				break;
 			default:
 				printf("Bad option given.\n");
