@@ -359,6 +359,47 @@ void genQCMsg(lo_bundle *bundle, char *name) {
 	}
 }
 
+// Generate OSC message with the Midas format
+void genMidasMsg(lo_bundle *bundle, char *name) {
+
+	if (posConfidence >= 0.2f)
+	{
+		lo_message msg = lo_message_new();
+		lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, userID);
+
+		for (int i = 0; i < nDimensions; i++)
+			lo_message_add_float(msg, jointCoords[i]);
+
+		lo_bundle_add_message(*bundle, "/joint", msg);
+	}
+
+	if (sendOrient && orientConfidence >= 0.2f)
+	{
+	  lo_message msg = lo_message_new();
+	  lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, userID);
+
+	  // x data is in first column
+	  lo_message_add_float(msg, jointOrients[0]);
+	  lo_message_add_float(msg, jointOrients[0+3]);
+	  lo_message_add_float(msg, jointOrients[0+6]);
+
+	  // y data is in 2nd column
+	  lo_message_add_float(msg, jointOrients[1]);
+	  lo_message_add_float(msg, jointOrients[1+3]);
+	  lo_message_add_float(msg, jointOrients[1+6]);
+
+	  // z data is in 3rd column
+	  lo_message_add_float(msg, jointOrients[2]);
+	  lo_message_add_float(msg, jointOrients[2+3]);
+	  lo_message_add_float(msg, jointOrients[2+6]);
+
+	  lo_bundle_add_message(*bundle, "/orient", msg);
+	}
+}
+
+
 void sendUserPosMsg(XnUserID id) {
 	XnPoint3D com;
 	sprintf(tmp, "/user/%d", id);
@@ -565,6 +606,8 @@ Options:\n\
   -xr\t\tOutput raw kinect data\n\
   -xt\t\tOutput joint orientation data\n\
   -xd\t\tTurn on puppet defaults: -xr -xt -q -w -r\n\
+	-xg\t\tOSCeleton-Midas defaults (with video)\n\
+	-xd\t\tOSCeleton-Midas defaults (background mode)\n\
   -h\t\t Show help.\n\n\
 For a more detailed explanation of options consult the README file.\n\n",
 		   name, name);
@@ -745,7 +788,7 @@ int main(int argc, char **argv) {
 			case 'r': // turn on raw mode
 				raw = true;
 				break;
-            case 't': // send joint orientations
+			case 't': // send joint orientations
 				sendOrient = true;
 				break;
 			case 'f': // turn on filtering on low confidence values
@@ -761,25 +804,27 @@ int main(int argc, char **argv) {
 				mirrorMode = false;
 				filterLowConfidence = false;
 				realworld = false;
-				oscFunc = &genQCMsg;
+				oscFunc = &genMidasMsg;
 				break;
 			case 'g': // turn on default options for Midas
 				raw = true;
 				preview = true;
+				kitchenMode = true;
 				sendOrient = true;
 				mirrorMode = false;
 				filterLowConfidence = true;
 				realworld = true;
-				oscFunc = &genQCMsg;
+				oscFunc = &genMidasMsg;
 				break;
 			case 'b': // turn on 'background' options for Midas
 				raw = true;
 				preview = false;
+				kitchenMode = true;
 				sendOrient = true;
 				mirrorMode = false;
 				filterLowConfidence = true;
 				realworld = true;
-				oscFunc = &genQCMsg;
+				oscFunc = &genMidasMsg;
 				break;
 			default:
 				printf("Bad option given.\n");
