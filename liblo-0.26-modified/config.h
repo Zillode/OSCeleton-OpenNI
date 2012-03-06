@@ -5,28 +5,31 @@
 /* #undef ENABLE_IPV6 */
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
-/* #undef HAVE_DLFCN_H */
+#define HAVE_DLFCN_H 1
 
 /* Define to 1 if inet_aton() is available. */
-/* #undef HAVE_INET_ATON */
+#define HAVE_INET_ATON 1
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
 
+/* Define to 1 if you have the `m' library (-lm). */
+/* #undef HAVE_LIBM */
+
 /* Define to 1 if you have the `pthread' library (-lpthread). */
-/* #undef HAVE_LIBPTHREAD */
+#define HAVE_LIBPTHREAD 1
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
 
 /* Define to 1 if you have the <netdb.h> header file. */
-/* #undef HAVE_NETDB_H */
+#define HAVE_NETDB_H 1
 
 /* Define to 1 if you have the <netinet/in.h> header file. */
-/* #undef HAVE_NETINET_IN_H */
+#define HAVE_NETINET_IN_H 1
 
 /* Define to 1 if poll() is available. */
-/* #undef HAVE_POLL */
+#define HAVE_POLL 1
 
 /* Define to 1 if select() is available. */
 #define HAVE_SELECT 1
@@ -44,7 +47,7 @@
 #define HAVE_STRING_H 1
 
 /* Define to 1 if you have the <sys/socket.h> header file. */
-/* #undef HAVE_SYS_SOCKET_H */
+#define HAVE_SYS_SOCKET_H 1
 
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #define HAVE_SYS_STAT_H 1
@@ -57,6 +60,10 @@
 
 /* If machine is bigendian */
 #define LO_BIGENDIAN "0"
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#define LT_OBJDIR ".libs/"
 
 /* Define to 1 if your C compiler doesn't accept -c and -o together. */
 /* #undef NO_MINUS_C_MINUS_O */
@@ -71,19 +78,19 @@
 #define PACKAGE_NAME "liblo"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "liblo " /*VERSION*/
+#define PACKAGE_STRING "liblo 0.26"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "liblo"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION /*VERSION*/
+#define PACKAGE_VERSION "0.26"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
 
 /* Version number of package */
-#define VERSION /*VERSION*/
+#define VERSION "0.26"
 
 /* Define to empty if `const' does not conform to ANSI C. */
 /* #undef const */

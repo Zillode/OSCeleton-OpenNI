@@ -98,6 +98,200 @@ XnChar g_strPose[20] = "";
 #define GESTURE_TO_USE "Wave"
 
 
+
+
+#include <stdio.h>
+#define _STDIO_INCLUDED_
+#include <string.h>
+
+#include <stdlib.h>
+#include <time.h>
+#include <stdarg.h>
+
+#if   VAX_VMS
+#include timeb
+#include <descrip.h>
+#include <ssdef.h>
+#include <stsdef.h>
+#include signal
+extern int LIB$SPAWN();
+#endif
+
+#if MAC_MCW || MAC_XCD
+#include <sys/time.h>
+#include <strings.h>
+#endif
+
+#if MAC_MCW || WIN_MCW || MAC_XCD
+#include <unistd.h>
+#endif
+
+#if WIN_MVC || WIN_BTC
+#ifndef _UNICODE
+#define _UNICODE
+#endif
+#ifndef UNICODE
+#define UNICODE
+#endif
+#include <Windows.h>
+#endif
+
+#if WIN_MVC
+#include <sys\types.h>
+#include <sys\timeb.h>
+#include <io.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <process.h>
+#include <signal.h>
+#endif
+
+#if WIN_BTC
+#include <io.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <signal.h>
+#endif
+
+#if WIN_MCW
+#include <io.h>
+#include <limits.h>
+#endif
+
+#if   UNIX_7 || WIN_GCC
+#include <sys/types.h>
+#include <sys/timeb.h>
+#include <signal.h>
+#endif
+
+#if   UNIX_V || LINUX || DARWIN
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/times.h>
+#include <unistd.h>
+#include <signal.h>
+#endif
+
+/*********************************************************/
+/* gentime: A function to return a floating point number */
+/*   which indicates the present time. Used internally   */
+/*   for timing rule firings and debugging.              */
+/*********************************************************/
+double gentime()
+  {
+#if   MAC_XCD || MAC_MCW
+
+	/*======================================================================*/
+	/* **MK-W-1006**: CLIPS employs time in seconds, this has been changed  */
+	/* in Midas to milliseconds. It still uses the double representation to */
+	/* allow nanosecond precision where supported (OS specific).            */
+	/*======================================================================*/
+
+	/*==========================================================*/
+	/* **MK-R-1007**: Removed the cocoa dependency on MACOSX    */
+	/* for time generation. We are now using the POSIX default. */
+	/*==========================================================*/
+
+   /* **MK-R-1007** *UnsignedWide result; */
+
+   /* **MK-R-1007** Microseconds(&result); */
+
+   /* **MK-R-1007** **MK-R-1006** CLIPS return(((((double) result.hi) * kTwoPower32) + result.lo) / 1000000.0); */
+   /* **MK-R-1007** return(((((double) result.hi) * kTwoPower32) + result.lo) / 1000.0); **MK-W-1006** Midas */
+
+/* ===BEGIN=== **MK-R-1007** */
+#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+	  struct timespec now;
+	  clock_gettime(
+
+#if defined(_POSIX_MONOTONIC_CLOCK)
+					CLOCK_MONOTONIC,
+#else
+					CLOCK_REALTIME,
+#endif
+					&now);
+	  /* **MK-R-1006** CLIPS return (now.tv_nsec / 1000000000.0) + now.tv_sec; */
+	  return ((double)now.tv_nsec / 1000000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#else
+	  struct timeval now;
+	  gettimeofday(&now, 0);
+	  /* **MK-R-1006** CLIPS return (now.tv_usec / 1000000.0) + now.tv_sec; */
+	  return ((double)now.tv_usec / 1000.0f) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#endif
+/* ===END=== **MK-R-1007** */
+
+#elif WIN_MCW
+   unsigned long int result;
+
+   result = GetTickCount();
+
+	/* **MK-W-1006** CLIPS return((double) result / 1000.0); */
+	return(((double) result); /* **MK-W-1006** Midas */
+/*
+#elif   WIN_BTC && (! WINDOW_INTERFACE)
+   unsigned long int result;
+
+   result = biostime(0,(long int) 0);
+*/
+   /* **MK-R-1006** CLIPS return((double) result / 18.2); */
+   /* return(((double) result / 18.2) * 1000); **MK-W-1006** Midas */
+/*
+*/
+#elif UNIX_V || DARWIN
+#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0)
+   struct timespec now;
+   clock_gettime(
+
+#if defined(_POSIX_MONOTONIC_CLOCK)
+       CLOCK_MONOTONIC,
+#else
+       CLOCK_REALTIME,
+#endif
+       &now);
+  /* **MK-W-1006** CLIPS return (now.tv_nsec / 1000000000.0) + now.tv_sec; */
+   return ((double)now.tv_nsec / 1000000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#else
+   struct timeval now;
+   gettimeofday(&now, 0);
+   /* **MK-W-1006** CLIPS return (now.tv_usec / 1000000.0) + now.tv_sec; */
+   return ((double)now.tv_usec / 1000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#endif
+
+#elif LINUX
+#if defined(_POSIX_TIMERS) && (_POSIX_TIMERS > 0) && defined(_POSIX_C_SOURCE) && (_POSIX_C_SOURCE >= 199309L)
+   struct timespec now;
+   clock_gettime(
+
+#if defined(_POSIX_MONOTONIC_CLOCK)
+       CLOCK_MONOTONIC,
+#else
+       CLOCK_REALTIME,
+#endif
+       &now);
+  /* **MK-W-1006** CLIPS return (now.tv_nsec / 1000000000.0) + now.tv_sec; */
+   return ((double)now.tv_nsec / 1000000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#else
+   struct timeval now;
+   gettimeofday(&now, 0);
+   /* **MK-W-1006** CLIPS return (now.tv_usec / 1000000.0) + now.tv_sec; */
+   return ((double)now.tv_usec / 1000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#endif
+
+#elif UNIX_7
+   struct timeval now;
+   gettimeofday(&now, 0);
+   /* **MK-W-1006** CLIPS return (now.tv_usec / 1000000.0) + now.tv_sec; */
+   return ((double)now.tv_usec / 1000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+
+#else
+   /* **MK-W-1006** CLIPS return((double) clock() / (double) CLOCKS_PER_SEC); */
+   return(((double) clock() / (double) CLOCKS_PER_SEC) * 1000); /* **MK-W-1006** Midas */
+#endif
+  }
+
+
+
+
 //gesture callbacks
 void XN_CALLBACK_TYPE Gesture_Recognized(xn::GestureGenerator& generator, const XnChar* strGesture, const XnPoint3D* pIDPosition, const XnPoint3D* pEndPosition, void* pCookie) {
     printf("Gesture recognized: %s\n", strGesture);
@@ -227,10 +421,10 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				jointTrans.orientation.orientation.elements[6],
 				jointTrans.orientation.orientation.elements[7],
 				jointTrans.orientation.orientation.elements[8],
-				0.0f);
+				gentime());
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f) (on %f))\n",
+			sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 %f) (ox3 %f) (oy1 %f) (oy2 %f) (oy3 %f) (oz1 %f) (oz2 %f) (oz3 %f) (on %f))\n",
 				userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
@@ -241,7 +435,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				jointTrans.orientation.orientation.elements[6],
 				jointTrans.orientation.orientation.elements[7],
 				jointTrans.orientation.orientation.elements[8],
-				0.0f);
+				gentime());
 		}
 		if (debugCSV || debugFacts) {
 			if (!outputFileOpen) {
@@ -454,10 +648,10 @@ void sendHandOSC() {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "OSC_Hand,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 0.0f);
+			sprintf(outputFileStr, "Hand,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, gentime());
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(OSC_Hand (x %f) (y %f) (z %f) (on %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 0.0f);
+			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (on %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, gentime());
 		}
 		
 		if (debugCSV || debugFacts) {
@@ -465,7 +659,7 @@ void sendHandOSC() {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "OSC_Hand,x,y,z,on\n";
+					outputFile << "Hand,x,y,z,on\n";
 				}
 			}
 			outputFile << outputFileStr;
@@ -589,6 +783,7 @@ Example: %s -a 127.0.0.1 -p 7110 -d 3 -n 1 -mx 1 -my 1 -mz 1 -ox 0 -oy 0 -oz 0\n
 (The above example corresponds to the defaults)\n\
 \n\
 Options:\n\
+  -h\t\t Show help.\n\
   -a <addr>\t Address to send OSC packets to (default: localhost).\n\
   -p <port>\t Port to send OSC packets to (default: 7110).\n\
   -w\t\t Activate depth view window.\n\
@@ -605,12 +800,16 @@ Options:\n\
   -q\t\t Enable Quartz Composer OSC format.\n\
   -s <file>\t Save to file (only .oni supported at the moment).\n\
   -i <file>\t Play from file (only .oni supported at the moment).\n\
-  -xr\t\tOutput raw kinect data\n\
-  -xt\t\tOutput joint orientation data\n\
-  -xd\t\tTurn on puppet defaults: -xr -xt -q -w -r\n\
-	-xg\t\tOSCeleton-Midas defaults (with video)\n\
-	-xd\t\tOSCeleton-Midas defaults (background mode)\n\
-  -h\t\t Show help.\n\n\
+  -xr\t\t Output raw kinect data\n\
+  -xt\t\t Output joint orientation data\n\
+  -xd\t\t Turn on puppet defaults: -xr -xt -q -w -r\n\
+\n\
+Midas specific:\n\
+  -c\t\t Store events to a CSV.\n\
+  -e\t\t Store events to fact S-Expressions.\n\
+  -xg\t\t OSCeleton-Midas defaults (with video)\n\
+  -xb\t\t OSCeleton-Midas defaults (background mode)\n\
+\n\
 For a more detailed explanation of options consult the README file.\n\n",
 		   name, name);
 	exit(1);
@@ -797,10 +996,10 @@ int main(int argc, char **argv) {
 		case 'c':
 			debugCSV = true;
 			break;
-		case 'd':
+		case 'e':
 			debugFacts = true;
 			break;
-        case 'x': //Set multipliers
+		case 'x': //Set multipliers
 			switch(argv[arg][2]) {
 			case 'r': // turn on raw mode
 				raw = true;

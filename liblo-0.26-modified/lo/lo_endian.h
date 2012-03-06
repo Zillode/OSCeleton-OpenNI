@@ -18,14 +18,7 @@
 #define LO_ENDIAN_H
 
 #include <sys/types.h>
-
-#ifdef _MSC_VER
-#define inline __inline
-#define uint64_t unsigned __int64
-#define uint32_t unsigned __int32
-#else
 #include <stdint.h>
-#endif
 
 #ifdef WIN32
 #include <winsock2.h>
@@ -125,12 +118,6 @@ static inline uint64_t lo_swap64(uint64_t x)
 
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef _MSC_VER
-#undef inline
-#undef uint64_t
-#undef uint32_t
 #endif
 
 #endif
