@@ -30,6 +30,7 @@
 #include "common.h"
 
 
+#define MIDAS_ENABLED 1
 
 char *ADDRESS = "127.0.0.1";
 char *PORT = "7110";
@@ -200,8 +201,8 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 
 	if (!raw)
 	{
-	  jointCoords[0] = off_x + (mult_x * (1280 - jointTrans.position.position.X) / 2560); //Normalize coords to 0..1 interval
-	  jointCoords[1] = off_y + (mult_y * (960 - jointTrans.position.position.Y) / 1920); //Normalize coords to 0..1 interval
+	  jointCoords[0] = off_x + (mult_x * (1280 - jointTrans.position.position.X) / 2560);  //Normalize coords to 0..1 interval
+	  jointCoords[1] = off_y + (mult_y * (960 - jointTrans.position.position.Y) / 1920);   //Normalize coords to 0..1 interval
 	  jointCoords[2] = off_z + (mult_z * jointTrans.position.position.Z * 7.8125 / 10000); //Normalize coords to 0..7.8125 interval
 	}
 	else if (realworld)
@@ -215,7 +216,8 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "Joint,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+			sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
+				userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
 				jointTrans.orientation.orientation.elements[2],
@@ -228,8 +230,8 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				0.0f);
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Joint (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f) (on %f))\n",
-				eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+			sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f) (on %f))\n",
+				userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
 				jointTrans.orientation.orientation.elements[2],
@@ -246,7 +248,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "Joint,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,on\n";
+					outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,on\n";
 				}
 			}
 			outputFile << outputFileStr;
@@ -358,6 +360,47 @@ void genQCMsg(lo_bundle *bundle, char *name) {
 	  lo_bundle_add_message(*bundle, tmp, msg);
 	}
 }
+
+// Generate OSC message with the Midas format
+void genMidasMsg(lo_bundle *bundle, char *name) {
+
+	if (posConfidence >= 0.2f)
+	{
+		lo_message msg = lo_message_new();
+		lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, userID);
+
+		for (int i = 0; i < nDimensions; i++)
+			lo_message_add_float(msg, jointCoords[i]);
+
+		lo_bundle_add_message(*bundle, "/joint", msg);
+	}
+
+	if (sendOrient && orientConfidence >= 0.2f)
+	{
+	  lo_message msg = lo_message_new();
+	  lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, userID);
+
+	  // x data is in first column
+	  lo_message_add_float(msg, jointOrients[0]);
+	  lo_message_add_float(msg, jointOrients[0+3]);
+	  lo_message_add_float(msg, jointOrients[0+6]);
+
+	  // y data is in 2nd column
+	  lo_message_add_float(msg, jointOrients[1]);
+	  lo_message_add_float(msg, jointOrients[1+3]);
+	  lo_message_add_float(msg, jointOrients[1+6]);
+
+	  // z data is in 3rd column
+	  lo_message_add_float(msg, jointOrients[2]);
+	  lo_message_add_float(msg, jointOrients[2+3]);
+	  lo_message_add_float(msg, jointOrients[2+6]);
+
+	  lo_bundle_add_message(*bundle, "/orient", msg);
+	}
+}
+
 
 void sendUserPosMsg(XnUserID id) {
 	XnPoint3D com;
@@ -565,6 +608,8 @@ Options:\n\
   -xr\t\tOutput raw kinect data\n\
   -xt\t\tOutput joint orientation data\n\
   -xd\t\tTurn on puppet defaults: -xr -xt -q -w -r\n\
+	-xg\t\tOSCeleton-Midas defaults (with video)\n\
+	-xd\t\tOSCeleton-Midas defaults (background mode)\n\
   -h\t\t Show help.\n\n\
 For a more detailed explanation of options consult the README file.\n\n",
 		   name, name);
@@ -605,6 +650,17 @@ void main_loop() {
 }
 
 
+void set_midas_options() {
+	raw = true;
+	preview = false;
+	kitchenMode = true;
+	sendOrient = true;
+	mirrorMode = false;
+	filterLowConfidence = true;
+	realworld = true;
+	oscFunc = &genMidasMsg;
+}
+
 
 int main(int argc, char **argv) {
 	printf("Initializing...\n");
@@ -617,6 +673,10 @@ int main(int argc, char **argv) {
 	xn::Recorder recorder;
 
 	context.Init();
+
+	if (MIDAS_ENABLED) {
+		set_midas_options();
+	}
 
 	while ((arg < argc) && (argv[arg][0] == '-')) {
 		switch (argv[arg][1]) {
@@ -745,7 +805,7 @@ int main(int argc, char **argv) {
 			case 'r': // turn on raw mode
 				raw = true;
 				break;
-            case 't': // send joint orientations
+			case 't': // send joint orientations
 				sendOrient = true;
 				break;
 			case 'f': // turn on filtering on low confidence values
@@ -761,25 +821,15 @@ int main(int argc, char **argv) {
 				mirrorMode = false;
 				filterLowConfidence = false;
 				realworld = false;
-				oscFunc = &genQCMsg;
+				oscFunc = &genMidasMsg;
 				break;
 			case 'g': // turn on default options for Midas
-				raw = true;
+				set_midas_options();
 				preview = true;
-				sendOrient = true;
-				mirrorMode = false;
-				filterLowConfidence = true;
-				realworld = true;
-				oscFunc = &genQCMsg;
 				break;
 			case 'b': // turn on 'background' options for Midas
-				raw = true;
+				set_midas_options();
 				preview = false;
-				sendOrient = true;
-				mirrorMode = false;
-				filterLowConfidence = true;
-				realworld = true;
-				oscFunc = &genQCMsg;
 				break;
 			default:
 				printf("Bad option given.\n");
