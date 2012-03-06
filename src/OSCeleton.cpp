@@ -215,7 +215,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "OSC_Joint,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+			sprintf(outputFileStr, "Joint,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
 				jointTrans.orientation.orientation.elements[2],
@@ -228,7 +228,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				0.0f);
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(OSC_Joint (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f) (on %f))\n",
+			sprintf(outputFileStr, "(Joint (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 (%f) (ox3 %f) (oy1 %f) (oy2 (%f) (oy3 %f) (oz1 %f) (oz2 (%f) (oz3 %f) (on %f))\n",
 				eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 				jointTrans.orientation.orientation.elements[0],
 				jointTrans.orientation.orientation.elements[1],
@@ -246,7 +246,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "OSC_Joint,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,on\n";
+					outputFile << "Joint,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,on\n";
 				}
 			}
 			outputFile << outputFileStr;
