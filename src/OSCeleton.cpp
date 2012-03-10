@@ -220,7 +220,7 @@ double gentime()
 #endif
 /* ===END=== **MK-R-1007** */
 
-#elif WIN_MCW
+#elif WIN_MCW || WIN32
    unsigned long int result;
 
    result = GetTickCount();
