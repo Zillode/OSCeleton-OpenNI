@@ -348,7 +348,23 @@ void XN_CALLBACK_TYPE lost_user(xn::UserGenerator& generator, XnUserID nId, void
 	lo_send(addr, "/lost_user","i",(int)nId);
 }
 
+// Callback: User exits the scene (but not lost yet)
+void XN_CALLBACK_TYPE exit_user(xn::UserGenerator& generator, XnUserID nId, void* pCookie) {
+	printf("User exit %d\n", nId);
+	
+	if (kitchenMode) return;
+	
+	lo_send(addr, "/exit_user","i",(int)nId);
+}
 
+// Callback: Register to when a user re-enters the scene after exiting.
+void XN_CALLBACK_TYPE re_enter_user(xn::UserGenerator& generator, XnUserID nId, void* pCookie) {
+	printf("User re-enter %d\n", nId);
+	
+	if (kitchenMode) return;
+	
+	lo_send(addr, "/re-enter_user","i",(int)nId);
+}
 
 // Callback: Detected a pose
 void XN_CALLBACK_TYPE pose_detected(xn::PoseDetectionCapability& capability, const XnChar* strPose, XnUserID nId, void* pCookie) {
@@ -936,7 +952,7 @@ int main(int argc, char **argv) {
 				 port_argument = 0;
 	XnMapOutputMode mapMode;
 	XnStatus nRetVal = XN_STATUS_OK;
-	XnCallbackHandle hUserCallbacks, hCalibrationCallbacks, hPoseCallbacks, hHandsCallbacks, hGestureCallbacks;
+	XnCallbackHandle hUserCallbacks, hExitCallbacks, hReEnterCallbacks, hCalibrationCallbacks, hPoseCallbacks, hHandsCallbacks, hGestureCallbacks;
 	xn::Recorder recorder;
 
 	context.Init();
@@ -1141,6 +1157,8 @@ int main(int argc, char **argv) {
 			nRetVal = userGenerator.Create(context);
 
 		checkRetVal(userGenerator.RegisterUserCallbacks(new_user, lost_user, NULL, hUserCallbacks));
+        checkRetVal(userGenerator.RegisterToUserExit(exit_user, NULL, hExitCallbacks));
+		checkRetVal(userGenerator.RegisterToUserReEnter(re_enter_user, NULL, hReEnterCallbacks));
 		checkRetVal(userGenerator.GetSkeletonCap().RegisterCalibrationCallbacks(calibration_started, calibration_ended, NULL, hCalibrationCallbacks));
 		checkRetVal(userGenerator.GetPoseDetectionCap().RegisterToPoseCallbacks(pose_detected, NULL, NULL, hPoseCallbacks));
 		checkRetVal(userGenerator.GetSkeletonCap().GetCalibrationPose(g_strPose));
