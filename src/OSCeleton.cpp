@@ -309,7 +309,7 @@ void XN_CALLBACK_TYPE new_hand(xn::HandsGenerator &generator, XnUserID nId, cons
 	printf("New Hand %d\n", nId);
 	if (kitchenMode) return;
 
-	lo_send(addr, "/new_user", NULL);
+	lo_send(addr, "/new_hand", NULL);
 }
 void XN_CALLBACK_TYPE lost_hand(xn::HandsGenerator &generator, XnUserID nId, XnFloat fTime, void *pCookie) {
 	printf("Lost Hand %d               \n", nId);
@@ -317,7 +317,7 @@ void XN_CALLBACK_TYPE lost_hand(xn::HandsGenerator &generator, XnUserID nId, XnF
 
 	if (kitchenMode) return;
 
-	lo_send(addr, "/lost_user", NULL);
+	lo_send(addr, "/lost_hand", NULL);
 }
 void XN_CALLBACK_TYPE update_hand(xn::HandsGenerator &generator, XnUserID nID, const XnPoint3D *pPosition, XnFloat fTime, void *pCookie) {
 	haveHand = true;
