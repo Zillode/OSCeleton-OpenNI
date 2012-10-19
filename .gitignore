@@ -11,3 +11,4 @@ liblo-0.26/build/vs2008/obj
 .deps
 Release
 Debug
+/liblo-0.26-modified\build\vs2008/obj
