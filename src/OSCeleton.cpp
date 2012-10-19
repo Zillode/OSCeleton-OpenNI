@@ -226,7 +226,7 @@ double gentime()
    result = GetTickCount();
 
 	/* **MK-W-1006** CLIPS return((double) result / 1000.0); */
-	return(((double) result); /* **MK-W-1006** Midas */
+	return(((double) result)); /* **MK-W-1006** Midas */
 /*
 #elif   WIN_BTC && (! WINDOW_INTERFACE)
    unsigned long int result;
