@@ -31,6 +31,7 @@
 
 
 #define MIDAS_ENABLED 1
+#define ORIENTATION_ENABLED 0
 
 char *ADDRESS = "127.0.0.1";
 char *PORT = "7110";
@@ -61,6 +62,7 @@ double off_y = 0.0;
 double off_z = 0.0;
 
 // hand data
+int handID;
 float handCoords[3];
 bool haveHand = false;
 
@@ -319,6 +321,7 @@ void XN_CALLBACK_TYPE lost_hand(xn::HandsGenerator &generator, XnUserID nId, XnF
 }
 void XN_CALLBACK_TYPE update_hand(xn::HandsGenerator &generator, XnUserID nID, const XnPoint3D *pPosition, XnFloat fTime, void *pCookie) {
 	haveHand = true;
+	handID = nID;
 	handCoords[0] = pPosition->X;
 	handCoords[1] = pPosition->Y;
 	handCoords[2] = pPosition->Z;
@@ -386,6 +389,7 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 	userGenerator.GetSkeletonCap().GetSkeletonJoint(player, eJoint, jointTrans);
 
 	posConfidence = jointTrans.position.fConfidence;
+    orientConfidence = jointTrans.orientation.fConfidence;
 
 	userID = player;
 
@@ -409,40 +413,90 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 	    jointCoords[1] = realwordPoint.Y;
 	    jointCoords[2] = realwordPoint.Z;
 		
+
+		/*
+		From https://groups.google.com/forum/?fromgroups=#!topic/openni-dev/TfglOOjhW2E
+
+		Matrix44f mbase = CINDERSKELETON->getLimbOrientation(XN_SKEL_NECK); 
+		Matrix44f mupper = CINDERSKELETON- 
+		>getLimbOrientation(XN_SKEL_RIGHT_SHOULDER); 
+		Matrix44f mlower = CINDERSKELETON- 
+		>getLimbOrientation(XN_SKEL_RIGHT_ELBOW); 
+
+		// Shoulder 
+
+		glPushMatrix(); 
+		glMultMatrixf(mbase); 
+
+		glColor3f(1.0, 0, 0); 
+		drawCylinder(); 
+
+		// Upper Arm 
+
+		glTranslatef(2.0, 0, 0); 
+		glMultMatrixf(mbase.inverted() * mupper); 
+		glColor3f(0.0, 1.0, 0); 
+		drawCylinder(); 
+
+		// Lower Arm 
+
+		glTranslatef(2.0, 0, 0); 
+		glMultMatrixf(mupper.inverted() * mlower);
+
+		*/
+
 		if (debugCSV) {
-			sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
-				userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
-				jointTrans.orientation.orientation.elements[0],
-				jointTrans.orientation.orientation.elements[1],
-				jointTrans.orientation.orientation.elements[2],
-				jointTrans.orientation.orientation.elements[3],
-				jointTrans.orientation.orientation.elements[4],
-				jointTrans.orientation.orientation.elements[5],
-				jointTrans.orientation.orientation.elements[6],
-				jointTrans.orientation.orientation.elements[7],
-				jointTrans.orientation.orientation.elements[8],
-				gentime());
+			if (sendOrient) {
+				sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
+					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+					jointTrans.orientation.orientation.elements[0],
+					jointTrans.orientation.orientation.elements[1],
+					jointTrans.orientation.orientation.elements[2],
+					jointTrans.orientation.orientation.elements[3],
+					jointTrans.orientation.orientation.elements[4],
+					jointTrans.orientation.orientation.elements[5],
+					jointTrans.orientation.orientation.elements[6],
+					jointTrans.orientation.orientation.elements[7],
+					jointTrans.orientation.orientation.elements[8],
+					orientConfidence,
+					posConfidence,
+					gentime());
+			} else {
+				sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f\n", 
+					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+					posConfidence,
+					gentime());
+			}
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 %f) (ox3 %f) (oy1 %f) (oy2 %f) (oy3 %f) (oz1 %f) (oz2 %f) (oz3 %f) (on %f))\n",
-				userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
-				jointTrans.orientation.orientation.elements[0],
-				jointTrans.orientation.orientation.elements[1],
-				jointTrans.orientation.orientation.elements[2],
-				jointTrans.orientation.orientation.elements[3],
-				jointTrans.orientation.orientation.elements[4],
-				jointTrans.orientation.orientation.elements[5],
-				jointTrans.orientation.orientation.elements[6],
-				jointTrans.orientation.orientation.elements[7],
-				jointTrans.orientation.orientation.elements[8],
-				gentime());
+			if (sendOrient) {
+				sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 %f) (ox3 %f) (oy1 %f) (oy2 %f) (oy3 %f) (oz1 %f) (oz2 %f) (oz3 %f) (confidence_orientation %f) (confidence %f) (time %f))\n",
+					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+					jointTrans.orientation.orientation.elements[0],
+					jointTrans.orientation.orientation.elements[1],
+					jointTrans.orientation.orientation.elements[2],
+					jointTrans.orientation.orientation.elements[3],
+					jointTrans.orientation.orientation.elements[4],
+					jointTrans.orientation.orientation.elements[5],
+					jointTrans.orientation.orientation.elements[6],
+					jointTrans.orientation.orientation.elements[7],
+					jointTrans.orientation.orientation.elements[8],
+					orientConfidence,
+					posConfidence,
+					gentime());
+			} else {
+				sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (confidence %f) (time %f))\n",
+					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+					posConfidence,
+					gentime());
+			}
 		}
 		if (debugCSV || debugFacts) {
 			if (!outputFileOpen) {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,on\n";
+					outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
 				}
 			}
 			outputFile << outputFileStr;
@@ -458,8 +512,6 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 
 	if (sendOrient)
 	{
-	  orientConfidence = jointTrans.orientation.fConfidence;
-
 	  for (int i=0; i<9; i++)
 	  {
 	    jointOrients[i] = jointTrans.orientation.orientation.elements[i];
@@ -558,7 +610,21 @@ void genQCMsg(lo_bundle *bundle, char *name) {
 // Generate OSC message with the Midas format
 void genMidasMsg(lo_bundle *bundle, char *name) {
 
-	if (posConfidence >= 0.2f)
+	if (posConfidence >= 0.1f)
+	{
+		lo_message msg = lo_message_new();
+		lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, userID);
+
+		for (int i = 0; i < nDimensions; i++)
+			lo_message_add_float(msg, jointCoords[i]);
+		
+		lo_message_add_float(msg, posConfidence);
+
+		lo_bundle_add_message(*bundle, "/joint", msg);
+	}
+
+	if (sendOrient && orientConfidence >= 0.1f)
 	{
 		lo_message msg = lo_message_new();
 		lo_message_add_string(msg, name);
@@ -567,31 +633,26 @@ void genMidasMsg(lo_bundle *bundle, char *name) {
 		for (int i = 0; i < nDimensions; i++)
 			lo_message_add_float(msg, jointCoords[i]);
 
+		// x data is in first column
+		lo_message_add_float(msg, jointOrients[0]);
+		lo_message_add_float(msg, jointOrients[0+3]);
+		lo_message_add_float(msg, jointOrients[0+6]);
+
+		// y data is in 2nd column
+		lo_message_add_float(msg, jointOrients[1]);
+		lo_message_add_float(msg, jointOrients[1+3]);
+		lo_message_add_float(msg, jointOrients[1+6]);
+
+		// z data is in 3rd column
+		lo_message_add_float(msg, jointOrients[2]);
+		lo_message_add_float(msg, jointOrients[2+3]);
+		lo_message_add_float(msg, jointOrients[2+6]);
+	  
+		lo_message_add_float(msg, orientConfidence);
+		
+		lo_message_add_float(msg, posConfidence);
+		
 		lo_bundle_add_message(*bundle, "/joint", msg);
-	}
-
-	if (sendOrient && orientConfidence >= 0.2f)
-	{
-	  lo_message msg = lo_message_new();
-	  lo_message_add_string(msg, name);
-		lo_message_add_int32(msg, userID);
-
-	  // x data is in first column
-	  lo_message_add_float(msg, jointOrients[0]);
-	  lo_message_add_float(msg, jointOrients[0+3]);
-	  lo_message_add_float(msg, jointOrients[0+6]);
-
-	  // y data is in 2nd column
-	  lo_message_add_float(msg, jointOrients[1]);
-	  lo_message_add_float(msg, jointOrients[1+3]);
-	  lo_message_add_float(msg, jointOrients[1+6]);
-
-	  // z data is in 3rd column
-	  lo_message_add_float(msg, jointOrients[2]);
-	  lo_message_add_float(msg, jointOrients[2+3]);
-	  lo_message_add_float(msg, jointOrients[2+6]);
-
-	  lo_bundle_add_message(*bundle, "/orient", msg);
 	}
 }
 
@@ -648,10 +709,10 @@ void sendHandOSC() {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "Hand,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, gentime());
+			sprintf(outputFileStr, "Hand,%f,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, gentime());
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (on %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, gentime());
+			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (confidence %f) (time %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, gentime());
 		}
 		
 		if (debugCSV || debugFacts) {
@@ -659,7 +720,7 @@ void sendHandOSC() {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "Hand,x,y,z,on\n";
+					outputFile << "Hand,x,y,z,confidence,time\n";
 				}
 			}
 			outputFile << outputFileStr;
@@ -671,12 +732,19 @@ void sendHandOSC() {
 	    jointCoords[1] = handCoords[1];
 	    jointCoords[2] = handCoords[2];
 	}
+	
+	lo_message msg = lo_message_new();
 
+	lo_message_add_int32(msg, handID);
 
-	oscFunc(&bundle, "s_hand");
-	lo_send_bundle(addr, bundle);
+	for (int i = 0; i < nDimensions; i++)
+		lo_message_add_float(msg, jointCoords[i]);
+		
+	lo_message_add_float(msg, 1);
 
-	printf("hand %.3f %.3f     \r", jointCoords[0], jointCoords[1]);
+	lo_bundle_add_message(*bundle, "/hand", msg);
+
+	// printf("hand %.3f %.3f     \r", jointCoords[0], jointCoords[1]);
 	haveHand = false;
 }
 
@@ -1025,10 +1093,12 @@ int main(int argc, char **argv) {
 			case 'g': // turn on default options for Midas
 				set_midas_options();
 				preview = true;
+				MIDAS_ENABLED = true;
 				break;
 			case 'b': // turn on 'background' options for Midas
 				set_midas_options();
 				preview = false;
+				MIDAS_ENABLED = true;
 				break;
 			default:
 				printf("Bad option given.\n");
@@ -1098,6 +1168,10 @@ int main(int argc, char **argv) {
 		printf("Quartz Composer\n");
 	else
 		printf("Default OSCeleton format\n");
+
+	if (MIDAS_ENABLED) {
+		printf("MidasEngine compatibility enabled\n");
+	}
 
 	printf("Initialized Kinect, looking for users...\n\n");
 	context.StartGeneratingAll();
