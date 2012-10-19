@@ -920,7 +920,7 @@ void main_loop() {
 void set_midas_options() {
 	raw = true;
 	preview = false;
-	kitchenMode = true;
+	kitchenMode = false;
 	sendOrient = true;
 	mirrorMode = false;
 	filterLowConfidence = true;
@@ -1167,9 +1167,9 @@ int main(int argc, char **argv) {
 	else
 		printf("Default OSCeleton format\n");
 
-	if (MIDAS_ENABLED) {
-		printf("MidasEngine compatibility enabled\n");
-	}
+#if MIDAS_ENABLED
+	printf("MidasEngine compatibility enabled\n");
+#endif
 
 	printf("Initialized Kinect, looking for users...\n\n");
 	context.StartGeneratingAll();
