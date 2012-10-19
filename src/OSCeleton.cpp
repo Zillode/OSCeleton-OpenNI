@@ -742,7 +742,7 @@ void sendHandOSC() {
 		
 	lo_message_add_float(msg, 1);
 
-	lo_bundle_add_message(*bundle, "/hand", msg);
+	lo_bundle_add_message(bundle, "/hand", msg);
 
 	// printf("hand %.3f %.3f     \r", jointCoords[0], jointCoords[1]);
 	haveHand = false;
@@ -1093,12 +1093,10 @@ int main(int argc, char **argv) {
 			case 'g': // turn on default options for Midas
 				set_midas_options();
 				preview = true;
-				MIDAS_ENABLED = true;
 				break;
 			case 'b': // turn on 'background' options for Midas
 				set_midas_options();
 				preview = false;
-				MIDAS_ENABLED = true;
 				break;
 			default:
 				printf("Bad option given.\n");

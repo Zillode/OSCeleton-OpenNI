@@ -78,7 +78,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\liblo-0.26-modified;$(OPEN_NI_INCLUDE);../Pre-built.2/include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\liblo-0.26-modified;$(OPEN_NI_INCLUDE);../Pre-built.2/include;C:\Program Files (x86)\OpenNI\Include;C:\Program Files\OpenNI\Include;D:\Program Files (x86)\OpenNI\Include;D:\Program Files\OpenNI\Include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -90,7 +90,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>OpenNI.lib;WS2_32.Lib;winmm.lib;glut32.lib;liblo.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>lib;$(OPEN_NI_LIB);../liblo-0.26-modified/lib/ReleaseLib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>lib;$(OPEN_NI_LIB);../liblo-0.26-modified/lib/ReleaseLib;C:\Program Files (x86)\OpenNI\Lib;C:\Program Files\OpenNI\Lib;D:\Program Files (x86)\OpenNI\Lib;D:\Program Files\OpenNI\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
