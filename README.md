@@ -17,8 +17,7 @@ Set to 0 to obtain the original default behavior or add -xo as a commandline opt
 How do I use it?
 ----------------
 
-### First you need to install the OpenNI driver, framework, and 
-middleware
+### First you need to install the OpenNI driver, framework, and middleware
 #### Windows / Linux / Mac OSX
 Get avin's hacked Primesense PSDK driver for kinect:
 [https://github.com/avin2/SensorKinect](https://github.com/avin2/SensorKinect)
@@ -39,32 +38,31 @@ on windows: use the VC++ express .sln file.
 
 If you run the executable without any arguments, it will send the OSC
 messages in the Midas format to localhost on port 7110.
-To learn about the OSC message format, continue reading below or check
-out the original processing examples at
+To learn about the OSC message format, continue reading below.
+You can also check out the original processing examples at
 [https://github.com/Sensebloom/OSCeleton-examples](https://github.com/Sensebloom/OSCeleton-examples)
+but don't forget to add the -xo commandline option to use the original format!
 
 
 OSC Message format
 ------------------
 
-### New user detected - no skeleton available yet. This is a good time
-### for you to ask the user to do the calibration pose:
+### New user detected - no skeleton available yet.
     Address pattern: "/new_user"
     Type tag: "i"
     i: A numeric ID attributed to the new user.
 
-### Calibration started - The calibration process started
+### Calibration started - The calibration process started.
     Address pattern: "/calib_start"
     Type tag: "i"
     i: ID of the user whose calibration process started.
 
-### New skeleton detected - The calibration was finished successfully,
-### joint coordinate messages for this user will be incoming soon ;):
+### New skeleton detected - The calibration was finished successfully, joint coordinate messages for this user will be incoming soon ;)
     Address pattern: "/new_skel"
     Type tag: "i"
     i: ID of the user whose skeleton is detected.
 
-### Calibration failed - The calibration failed
+### Calibration failed - The calibration failed.
     Address pattern: "/calib_fail"
     Type tag: "i"
     i: ID of the user whose calibration failed.
@@ -72,12 +70,12 @@ OSC Message format
 ### Lost user - we have lost the user with the following id:
     Address pattern: "/lost_user"
     Type tag: "i"
-    i: The ID of the lost user. (This ID will be free for reuse from now 
-on)
+    i: The ID of the lost user. (This ID will be free for reuse from now on)
 
 ### Joint message - message with the coordinates of each skeleton joint:
 The default OSC message format is tailored towards the Midas-Mudra
 framework. The messages will have the following format:
+
     Address pattern: "/Joint"
     Type tag: "siffffd"
     s: Joint name, check out the full list of joints below.
@@ -91,6 +89,7 @@ framework. The messages will have the following format:
 ### Hand message - message with the coordinates of a hand event:
 The default OSC message format is tailored towards the Midas-Mudra
 framework. The messages will have the following format:
+
     Address pattern: "/Hand"
     Type tag: "iffffd"
     i: The ID of the hand.
@@ -102,6 +101,7 @@ framework. The messages will have the following format:
 
 #### NOTE: Original mode
 To enable the original OSCeleton message format, use -xo:
+
     Address pattern: "/joint"
     Type tag: "sifff"
     s: Joint name, check out the full list of joints below.
@@ -123,11 +123,13 @@ To enable the original OSCeleton message format, use -xo:
 To send OSC messages compatible with the awesome animata skeletal
 animation software use the "-k" option. The messages will have the
 following format:
+
     Address pattern: "/joint"
     Type tag: "sff"
     s: joint name concatenated with user id (ex: "l_shoulder0")
     f: X coordinate of joint in interval [0.0, 1.0]
     f: Y coordinate of joint in interval [0.0, 1.0]
+
 In this mode new_user, new_skel and lost_user messages
 will not be sent.
 
@@ -135,11 +137,13 @@ will not be sent.
 You can enable a message format that is more friendly to Quartz
 composer with the "-q" option. The messages will have the following 
 format:
+
     Address pattern: "/joint/name/id"
     Type tag: "fff"
     f: X coordinate of joint in interval [0.0, 1.0]
     f: Y coordinate of joint in interval [0.0, 1.0]
     f: Z coordinate of joint in interval [0.0, 7.0]
+
 Example (left knee of user 3):
     /joint/l_knee/3 0.08823146 0.5761504 0.44253197
 
@@ -149,37 +153,33 @@ Example (left knee of user 3):
 * head
 * neck
 * torso
-
 * r_collar #not supported by NITE (yet)
 * r_shoulder
 * r_elbow
 * r_wrist #not supported by NITE (yet)
 * r_hand
 * r_finger #not supported by NITE (yet)
-
 * l_collar #not supported by NITE (yet)
 * l_shoulder
 * l_elbow
 * l_wrist #not supported by NITE (yet)
 * l_hand
 * l_finger #not supported by NITE (yet)
-
 * r_hip
 * r_knee
 * r_ankle
 * r_foot
-
 * l_hip
 * l_knee
 * l_ankle
 * l_foot
-
 
 ### -xr
 This option outputs the X,Y & Z data as "raw" kinect values
 
 ### -xt
 This option outputs the joint rotation data.
+
     Address pattern: "/orient"
     Type tag: "sifffffffff"
     s: Joint name, check out the full list of joints below.
@@ -195,6 +195,7 @@ or if in Quartz Composer mode:
     f f f: X axis orientation data
     f f f : Y axis orientation data
     f f f : Z axis orientation data
+
 Example (torso of user 4):
     /orient/torso/4 0.938792 -0.0774589 0.335662 0.0649184 0.996714 0.0484401 -0.338311 -0.0236846 0.940736
 
@@ -210,9 +211,12 @@ Runs the program with the default options for the Midas-Mudra framework (no visu
 
 Other
 -----
-### For feature request, reporting bugs, or general osceleton 
+### For feature request, reporting bugs, or general OSCeleton 
 discussion, come join the fun in our [google 
 group](http://groups.google.com/group/osceleton)!
+
+### OSCeleton-KinectSDK ?
+To use the KinectSDK in combination with OSC messages, download [OSCeleton-KinectSDK](https://github.com/Zillode/OSCeleton-KinectSDK)
 
 Have fun!
 
