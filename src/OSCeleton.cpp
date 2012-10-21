@@ -516,7 +516,11 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
+					if (sendOrient) {
+						outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
+					} else {
+						outputFile << "Joint,user,joint,x,y,z,confidence,time\n";
+					}
 				}
 			}
 			outputFile << outputFileStr;
@@ -641,40 +645,42 @@ void genMidasMsg(lo_bundle *bundle, char *name, int buffIndex) {
 			lo_message_add_float(msg, jointCoords[i]);
 		
 		lo_message_add_float(msg, posConfidence);
-
-		lo_bundle_add_message(*bundle, "/joint", msg);
-	}
-
-	if (sendOrient && orientConfidence >= 0.1f)
-	{
-		lo_message msg = lo_message_new();
-		lo_message_add_string(msg, name);
-		lo_message_add_int32(msg, userID);
-
-		for (int i = 0; i < nDimensions; i++)
-			lo_message_add_float(msg, jointCoords[i]);
-
-		// x data is in first column
-		lo_message_add_float(msg, jointOrients[0]);
-		lo_message_add_float(msg, jointOrients[0+3]);
-		lo_message_add_float(msg, jointOrients[0+6]);
-
-		// y data is in 2nd column
-		lo_message_add_float(msg, jointOrients[1]);
-		lo_message_add_float(msg, jointOrients[1+3]);
-		lo_message_add_float(msg, jointOrients[1+6]);
-
-		// z data is in 3rd column
-		lo_message_add_float(msg, jointOrients[2]);
-		lo_message_add_float(msg, jointOrients[2+3]);
-		lo_message_add_float(msg, jointOrients[2+6]);
-	  
-		lo_message_add_float(msg, orientConfidence);
 		
-		lo_message_add_float(msg, posConfidence);
-		
-		lo_bundle_add_message(*bundle, "/joint", msg);
+		lo_message_add_double(msg, gentime());
+
+		lo_bundle_add_message(*bundle, "/Joint", msg);
 	}
+	// 
+	// if (sendOrient && orientConfidence >= 0.1f)
+	// {
+	// 	lo_message msg = lo_message_new();
+	// 	lo_message_add_string(msg, name);
+	// 	lo_message_add_int32(msg, userID);
+	// 
+	// 	for (int i = 0; i < nDimensions; i++)
+	// 		lo_message_add_float(msg, jointCoords[i]);
+	// 
+	// 	// x data is in first column
+	// 	lo_message_add_float(msg, jointOrients[0]);
+	// 	lo_message_add_float(msg, jointOrients[0+3]);
+	// 	lo_message_add_float(msg, jointOrients[0+6]);
+	// 
+	// 	// y data is in 2nd column
+	// 	lo_message_add_float(msg, jointOrients[1]);
+	// 	lo_message_add_float(msg, jointOrients[1+3]);
+	// 	lo_message_add_float(msg, jointOrients[1+6]);
+	// 
+	// 	// z data is in 3rd column
+	// 	lo_message_add_float(msg, jointOrients[2]);
+	// 	lo_message_add_float(msg, jointOrients[2+3]);
+	// 	lo_message_add_float(msg, jointOrients[2+6]);
+	//   
+	// 	lo_message_add_float(msg, orientConfidence);
+	// 	
+	// 	lo_message_add_float(msg, posConfidence);
+	// 	
+	// 	lo_bundle_add_message(*bundle, "/Joint", msg);
+	// }
 }
 
 
