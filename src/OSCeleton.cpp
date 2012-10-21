@@ -82,6 +82,8 @@ bool realworld = false;
 bool debugFacts = false;
 bool debugCSV = false;
 bool sendOrient = false;
+bool camelCase = false;
+bool handTime = false;
 int nDimensions = 3;
 
 char outputFileStr[1024];
@@ -765,14 +767,20 @@ void sendHandOSC() {
 	for (int i = 0; i < nDimensions; i++)
 		lo_message_add_float(msg, jointCoords[i]);
 	lo_message_add_float(msg, 1);
-	lo_bundle_add_message(bundle, "/hand", msg);
+	if (handTime) {
+		lo_message_add_double(msg, gentime());
+	}
+	if (camelCase) {
+		lo_bundle_add_message(bundle, "/Hand", msg);
+	} else {
+		lo_bundle_add_message(bundle, "/hand", msg);
+	}
 	if (lo_send_bundle(addr, bundle) != 0) { 
 		printf("error: unable to send bundle\n");
 		lo_bundle_pp(bundle);
 	}
 	lo_bundle_free_messages(bundle);
 
-	// printf("hand %.3f %.3f     \r", jointCoords[0], jointCoords[1]);
 	haveHand = false;
 }
 
@@ -878,7 +886,7 @@ void sendOSC() {
 
 int usage(char *name) {
 	printf("\nUsage: %s [OPTIONS]\n\
-Example: %s -a 127.0.0.1 -p 7110 -d 3 -n 1 -mx 1 -my 1 -mz 1 -ox 0 -oy 0 -oz 0\n\
+Example: %s -a 127.0.0.1 -p 7110 -mx 1 -my 1 -mz 1 -ox 0 -oy 0 -oz 0 -xb\n\
 \n\
 (The above example corresponds to the defaults)\n\
 \n\
@@ -898,15 +906,16 @@ Options:\n\
   -k\t\t Enable \"Kitchen\" mode (Animata compatibility mode).\n\
   -n\t\t Enable hand tracking mode\n\
   -q\t\t Enable Quartz Composer OSC format.\n\
-  -s <file>\t Save to file (only .oni supported at the moment).\n\
-  -i <file>\t Play from file (only .oni supported at the moment).\n\
+  -s <file>\t Save to file (.oni format).\n\
+  -i <file>\t Play from file (.oni format).\n\
   -xr\t\t Output raw kinect data\n\
   -xt\t\t Output joint orientation data\n\
   -xd\t\t Turn on puppet defaults: -xr -xt -q -w -r\n\
+  -xo\t\t Turn on the original OSCeleton settings\n\
 \n\
-Midas specific:\n\
-  -c\t\t Store events to a CSV.\n\
-  -e\t\t Store events to fact S-Expressions.\n\
+Midas specific options:\n\
+  -c\t\t Store events to a file (CSV format).\n\
+  -e\t\t Store events to a file (S-Expressions format).\n\
   -xg\t\t OSCeleton-Midas defaults (with video)\n\
   -xb\t\t OSCeleton-Midas defaults (background mode)\n\
 \n\
@@ -949,14 +958,17 @@ void main_loop() {
 }
 
 
-void set_midas_options() {
+void setMidasOptions() {
 	raw = true;
 	preview = false;
 	kitchenMode = false;
 	sendOrient = true;
+	handMode = false;
 	mirrorMode = false;
 	filterLowConfidence = true;
 	realworld = true;
+	camelCase = true;
+	handTime = true;
 	oscFunc = &genMidasMsg;
 }
 
@@ -974,7 +986,7 @@ int main(int argc, char **argv) {
 	context.Init();
 
 	if (MIDAS_ENABLED) {
-		set_midas_options();
+		setMidasOptions();
 	}
 
 	while ((arg < argc) && (argv[arg][0] == '-')) {
@@ -1113,7 +1125,7 @@ int main(int argc, char **argv) {
 			case 'w': // turn on real-world coordinates
 				realworld = true;
 				break;
-			case 'd': // turn on default options
+			case 'd': // turn on default Midas options
 				raw = true;
 				preview = true;
 				sendOrient = true;
@@ -1123,12 +1135,27 @@ int main(int argc, char **argv) {
 				oscFunc = &genMidasMsg;
 				break;
 			case 'g': // turn on default options for Midas
-				set_midas_options();
+				setMidasOptions();
 				preview = true;
 				break;
 			case 'b': // turn on 'background' options for Midas
-				set_midas_options();
+				setMidasOptions();
 				preview = false;
+				break;
+			case 'o':
+				kitchenMode = false;
+				handMode = false;
+				mirrorMode = true;
+				play = false;
+				record = false;
+				sendRot = false;
+				filter = false;
+				preview = false;
+				raw = false;
+				sendOrient = false;
+				camelCase = false;
+				handTime = false;
+				oscFunc = genOscMsg;
 				break;
 			default:
 				printf("Bad option given.\n");
