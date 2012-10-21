@@ -10,8 +10,7 @@ of the skeleton's joints via OSC messages. These can can then be used
 on your language / framework of choice.
 
 Note: this version of OSCeleton is heavily modified compared to the original (Sensebloom/OSCeleton).
-
-Additionally, when MIDAS_ENABLED is set to 1, default options are customized for the Midas Framework.
+When MIDAS_ENABLED is set to 1, default options are customized for the Midas Framework.
 This is different than the original OSCeleton configuration!
 Set to 0 to obtain the original default behavior or add -xo as a commandline option.
 
