@@ -82,7 +82,6 @@ bool realworld = false;
 bool debugFacts = false;
 bool debugCSV = false;
 bool sendOrient = false;
-bool camelCase = false;
 bool handTime = false;
 int nDimensions = 3;
 
@@ -650,7 +649,7 @@ void genMidasMsg(lo_bundle *bundle, char *name, int buffIndex) {
 		
 		lo_message_add_double(msg, gentime());
 
-		lo_bundle_add_message(*bundle, "/Joint", msg);
+		lo_bundle_add_message(*bundle, "/joint", msg);
 	}
 	// 
 	// if (sendOrient && orientConfidence >= 0.1f)
@@ -681,7 +680,7 @@ void genMidasMsg(lo_bundle *bundle, char *name, int buffIndex) {
 	// 	
 	// 	lo_message_add_float(msg, posConfidence);
 	// 	
-	// 	lo_bundle_add_message(*bundle, "/Joint", msg);
+	// 	lo_bundle_add_message(*bundle, "/joint", msg);
 	// }
 }
 
@@ -770,11 +769,7 @@ void sendHandOSC() {
 	if (handTime) {
 		lo_message_add_double(msg, gentime());
 	}
-	if (camelCase) {
-		lo_bundle_add_message(bundle, "/Hand", msg);
-	} else {
-		lo_bundle_add_message(bundle, "/hand", msg);
-	}
+	lo_bundle_add_message(bundle, "/hand", msg);
 	if (lo_send_bundle(addr, bundle) != 0) { 
 		printf("error: unable to send bundle\n");
 		lo_bundle_pp(bundle);
@@ -967,7 +962,6 @@ void setMidasOptions() {
 	mirrorMode = false;
 	filterLowConfidence = true;
 	realworld = true;
-	camelCase = true;
 	handTime = true;
 	oscFunc = &genMidasMsg;
 }
@@ -1153,7 +1147,6 @@ int main(int argc, char **argv) {
 				preview = false;
 				raw = false;
 				sendOrient = false;
-				camelCase = false;
 				handTime = false;
 				oscFunc = genOscMsg;
 				break;
