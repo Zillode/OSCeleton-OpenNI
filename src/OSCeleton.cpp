@@ -23,6 +23,25 @@
 #include <iostream>
 #include <fstream>
 
+#if defined(_WIN32) && !defined(WIN32)
+#define WIN32
+#endif
+
+#if WIN32
+#define WIN_MVC 1
+#include <winsock2.h>
+#include <Shlobj.h>
+#include <winerror.h>
+#include <comutil.h>
+#include <sstream>
+#endif
+
+#if WIN_MVC
+#include <time.h>
+#include <windows.h>
+#endif
+
+
 #include <XnCppWrapper.h>
 
 #include <lo/lo.h>
@@ -177,6 +196,70 @@ extern int LIB$SPAWN();
 #include <signal.h>
 #endif
 
+/* Implements gettimeofday for WIN_MVC */
+#if WIN_MVC
+#if defined(_MSC_VER) || defined(_MSC_EXTENSIONS)
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000Ui64
+#else
+  #define DELTA_EPOCH_IN_MICROSECS  11644473600000000ULL
+#endif
+
+struct timezone
+{
+  int  tz_minuteswest; /* minutes W of Greenwich */
+  int  tz_dsttime;     /* type of dst correction */
+};
+
+int gettimeofday(struct timeval *tv, struct timezone *tz);
+
+
+/* See http://www.suacommunity.com/dictionary/gettimeofday-entry.php */
+int gettimeofday(struct timeval *tv, struct timezone *tz) {
+  /* Define a structure to receive the current Windows filetime */
+  FILETIME ft;
+ 
+  /* Initialize the present time to 0 and the timezone to UTC */
+  unsigned __int64 tmpres = 0;
+  static int tzflag = 0;
+ 
+  if (NULL != tv) {
+    GetSystemTimeAsFileTime(&ft);
+ 
+   /* The GetSystemTimeAsFileTime returns the number of 100 nanosecond 
+      intervals since Jan 1, 1601 in a structure. Copy the high bits to 
+      the 64 bit tmpres, shift it left by 32 then or in the low 32 bits. */
+    tmpres |= ft.dwHighDateTime;
+    tmpres <<= 32;
+    tmpres |= ft.dwLowDateTime;
+ 
+    /* Convert to microseconds by dividing by 10 */
+    tmpres /= 10;
+ 
+   /* The Unix epoch starts on Jan 1 1970.  Need to subtract the difference 
+      in seconds from Jan 1 1601. */
+    tmpres -= DELTA_EPOCH_IN_MICROSECS;
+ 
+    /* Finally change microseconds to seconds and place in the seconds value. 
+       The modulus picks up the microseconds. */
+    tv->tv_sec = (long)(tmpres / 1000000UL);
+    tv->tv_usec = (long)(tmpres % 1000000UL);
+  }
+ 
+  if (NULL != tz) {
+    if (!tzflag) {
+      _tzset();
+      tzflag++;
+    }
+    /* Adjust for the timezone west of Greenwich */
+    tz->tz_minuteswest = _timezone / 60;
+    tz->tz_dsttime = _daylight;
+  }
+ 
+  return 0;
+}
+#endif
+
+
 /*********************************************************/
 /* gentime: A function to return a floating point number */
 /*   which indicates the present time. Used internally   */
@@ -225,7 +308,7 @@ double gentime()
 #endif
 /* ===END=== **MK-R-1007** */
 
-#elif WIN_MCW || WIN32
+#elif WIN_MCW
    unsigned long int result;
 
    result = GetTickCount();
@@ -288,6 +371,11 @@ double gentime()
    /* **MK-W-1006** CLIPS return (now.tv_usec / 1000000.0) + now.tv_sec; */
    return ((double)now.tv_usec / 1000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
 
+#elif WIN_MVC
+   struct timeval now;
+   gettimeofday(&now, 0);
+   /* **MK-W-1006** CLIPS had no implementation */
+   return ((double)now.tv_usec / 1000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
 #else
    /* **MK-W-1006** CLIPS return((double) clock() / (double) CLOCKS_PER_SEC); */
    return(((double) clock() / (double) CLOCKS_PER_SEC) * 1000); /* **MK-W-1006** Midas */
@@ -514,8 +602,31 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 		}
 		if (debugCSV || debugFacts) {
 			if (!outputFileOpen) {
-				outputFile.open("outputFile.txt");
+#if WIN32
+				HRESULT hr;
+				LPWSTR wszPath = NULL;
+				hr = SHGetKnownFolderPath(FOLDERID_Documents,0,NULL,&wszPath);
+				if (SUCCEEDED(hr)){
+					_bstr_t bstrPath(wszPath);
+					std::ostringstream strs;
+					strs << (char*)bstrPath;
+					strs << "/points-OpenNI-";
+					strs << std::fixed << gentime();
+					strs << ".csv";
+					outputFile.open(strs.str());
+					outputFileOpen = true;
+				} else {
+					printf("Failed to create file");
+				}
+				CoTaskMemFree(wszPath);
+#else
+				std::ostringstream strs;
+				strs << "points-OpenNI-";
+				strs << gentime();
+				strs << ".csv";
+				outputFile.open(strs.str());
 				outputFileOpen = true;
+#endif
 				if (debugCSV) {
 					if (sendOrient) {
 						outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
@@ -864,9 +975,9 @@ void sendOSC() {
 			if (jointPos(aUsers[i], XN_SKEL_RIGHT_FOOT) == 0) {
 				oscFunc(&bundle, "r_foot", 23);
 			}
-			if (lo_send_bundle(addr, bundle) != 0) { 
-				printf("error: unable to send bundle\n");
-				lo_bundle_pp(bundle);
+			if (lo_send_bundle(addr, bundle) < 0) { 
+				printf("error: unable to send bundle (%lf)\n", gentime());
+				// DEBUG lo_bundle_pp(bundle);
 			}
 			lo_bundle_free_messages(bundle);
 		}
@@ -937,6 +1048,11 @@ void terminate(int ignored) {
 	lo_address_free(addr);
 	if (preview)
 		glutDestroyWindow(window);
+	if (outputFile != NULL) {
+		outputFileOpen = false;
+		outputFile.close();
+		outputFile;
+	}
 	exit(0);
 }
 
@@ -963,6 +1079,7 @@ void setMidasOptions() {
 	filterLowConfidence = true;
 	realworld = true;
 	handTime = true;
+	debugCSV = true;
 	oscFunc = &genMidasMsg;
 }
 

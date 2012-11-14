@@ -421,20 +421,20 @@ int send_data(lo_address a, lo_server from, char *data, const size_t data_len)
         ret = sendto(sock, data, data_len, MSG_NOSIGNAL,
                      a->ai->ai_addr, a->ai->ai_addrlen);
     } else {
-	ret = send(sock, data, data_len, MSG_NOSIGNAL);
+		ret = send(sock, data, data_len, MSG_NOSIGNAL);
     }
 
     if (a->protocol == LO_TCP && ret == -1) {
         close(a->socket);
         a->socket=-1;
     }
-
+	
     if (ret == -1) {
-	a->errnum = geterror();
-	a->errstr = NULL;
+		a->errnum = geterror();
+		a->errstr = NULL;
     } else {
-	a->errnum = 0;
-	a->errstr = NULL;
+		a->errnum = 0;
+		a->errstr = NULL;
     }
 
     return ret;

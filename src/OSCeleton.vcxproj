@@ -64,7 +64,7 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>OpenNI.lib;WS2_32.Lib;winmm.lib;liblo_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenNI.lib;WS2_32.Lib;winmm.lib;comsuppw.lib;liblo_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib;$(OPEN_NI_LIB);../liblo-0.26-modified/lib/DebugLib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
@@ -89,7 +89,7 @@
       <ForcedIncludeFiles>%(ForcedIncludeFiles)</ForcedIncludeFiles>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>OpenNI.lib;WS2_32.Lib;winmm.lib;glut32.lib;liblo.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>OpenNI.lib;WS2_32.Lib;winmm.lib;glut32.lib;comsuppw.lib;liblo.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>lib;$(OPEN_NI_LIB);../liblo-0.26-modified/lib/ReleaseLib;C:\Program Files (x86)\OpenNI\Lib;C:\Program Files\OpenNI\Lib;D:\Program Files (x86)\OpenNI\Lib;D:\Program Files\OpenNI\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
