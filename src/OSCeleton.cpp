@@ -100,6 +100,7 @@ bool filterLowConfidence = false;
 bool realworld = false;
 bool debugFacts = false;
 bool debugCSV = false;
+bool useRealTimeClock = true;
 bool sendOrient = false;
 bool handTime = false;
 int nDimensions = 3;
@@ -259,6 +260,29 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 }
 #endif
 
+
+double applicationtime()
+{
+#if UNIX_V || DARWIN || MAC_MCW || MAC_XCD || LINUX
+	struct timespec now;
+	clock_gettime(
+#if defined(_POSIX_MONOTONIC_CLOCK)
+       CLOCK_MONOTONIC,
+#else
+       CLOCK_REALTIME,
+#endif
+       &now);
+	/* **MK-W-1006** CLIPS return (now.tv_nsec / 1000000000.0) + now.tv_sec; */
+	return ((double)now.tv_nsec / 1000000.0) + ((double)now.tv_sec * 1000); /* **MK-W-1006** Midas */
+#elif WIN_MVC
+   unsigned long int result;
+
+   result = GetTickCount();
+
+	/* **MK-W-1006** CLIPS return((double) result / 1000.0); */
+	return(((double) result)); /* **MK-W-1006** Midas */
+#endif
+}
 
 /*********************************************************/
 /* gentime: A function to return a floating point number */
@@ -502,6 +526,13 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 
 	userID = player;
 
+	double time = 0;
+	if (useRealTimeClock) {
+		time = gentime();
+	} else {
+		time = applicationtime();
+	}
+
 	if (filterLowConfidence && posConfidence < 0.5) {
 		return 0;
 	}
@@ -569,12 +600,12 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 					jointTrans.orientation.orientation.elements[8],
 					orientConfidence,
 					posConfidence,
-					gentime());
+					time);
 			} else {
 				sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f\n", 
 					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					posConfidence,
-					gentime());
+					time);
 			}
 		}
 		if (debugFacts) {
@@ -592,12 +623,12 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 					jointTrans.orientation.orientation.elements[8],
 					orientConfidence,
 					posConfidence,
-					gentime());
+					time);
 			} else {
 				sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (confidence %f) (time %f))\n",
 					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					posConfidence,
-					gentime());
+					time);
 			}
 		}
 		if (debugCSV || debugFacts) {
@@ -758,7 +789,11 @@ void genMidasMsg(lo_bundle *bundle, char *name, int buffIndex) {
 		
 		lo_message_add_float(msg, posConfidence);
 		
-		lo_message_add_double(msg, gentime());
+		if (useRealTimeClock) {
+			lo_message_add_double(msg, gentime());
+		} else {
+			lo_message_add_double(msg, applicationtime());
+		}
 
 		lo_bundle_add_message(*bundle, "/joint", msg);
 	}
@@ -825,6 +860,13 @@ void sendHandOSC() {
 	if (!haveHand)
 		return;
 
+	double time = 0;
+	if (useRealTimeClock) {
+		time = gentime();
+	} else {
+		time = applicationtime();
+	}
+
 	lo_bundle bundle = lo_bundle_new(LO_TT_IMMEDIATE);
 
 	if (!raw)
@@ -848,10 +890,10 @@ void sendHandOSC() {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "Hand,%f,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, gentime());
+			sprintf(outputFileStr, "Hand,%f,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (confidence %f) (time %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, gentime());
+			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (confidence %f) (time %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
 		}
 		
 		if (debugCSV || debugFacts) {
@@ -878,7 +920,7 @@ void sendHandOSC() {
 		lo_message_add_float(msg, jointCoords[i]);
 	lo_message_add_float(msg, 1);
 	if (handTime) {
-		lo_message_add_double(msg, gentime());
+		lo_message_add_double(msg, time);
 	}
 	lo_bundle_add_message(bundle, "/hand", msg);
 	if (lo_send_bundle(addr, bundle) != 0) { 
@@ -1024,6 +1066,7 @@ Midas specific options:\n\
   -e\t\t Store events to a file (S-Expressions format).\n\
   -xg\t\t OSCeleton-Midas defaults (with video)\n\
   -xb\t\t OSCeleton-Midas defaults (background mode)\n\
+  -xc\t\t Use application-time instead of unix-epoch-time\n\
 \n\
 For a more detailed explanation of options consult the README file.\n\n",
 		   name, name);
@@ -1078,6 +1121,7 @@ void setMidasOptions() {
 	mirrorMode = false;
 	filterLowConfidence = true;
 	realworld = true;
+	useRealTimeClock = true;
 	handTime = true;
 	debugCSV = true;
 	oscFunc = &genMidasMsg;
@@ -1229,6 +1273,9 @@ int main(int argc, char **argv) {
 				break;
 			case 't': // send joint orientations
 				sendOrient = true;
+				break;
+			case 'c': // use application time
+				useRealTimeClock = false;
 				break;
 			case 'f': // turn on filtering on low confidence values
 				filterLowConfidence = true;
