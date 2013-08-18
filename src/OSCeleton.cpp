@@ -587,8 +587,9 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 
 		if (debugCSV) {
 			if (sendOrient) {
-				sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
-					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				sprintf(outputFileStr, "Joint,%d,%d,%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f\n", 
+					0, userID, eJoint,
+					realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					jointTrans.orientation.orientation.elements[0],
 					jointTrans.orientation.orientation.elements[1],
 					jointTrans.orientation.orientation.elements[2],
@@ -602,16 +603,17 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 					posConfidence,
 					time);
 			} else {
-				sprintf(outputFileStr, "Joint,%d,%d,%f,%f,%f,%f,%f\n", 
-					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				sprintf(outputFileStr, "Joint,%d,%d,%d,%f,%f,%f,%f,%f\n", 
+					0, userID, eJoint,
+					realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					posConfidence,
 					time);
 			}
 		}
 		if (debugFacts) {
 			if (sendOrient) {
-				sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 %f) (ox3 %f) (oy1 %f) (oy2 %f) (oy3 %f) (oz1 %f) (oz2 %f) (oz3 %f) (confidence_orientation %f) (confidence %f) (time %f))\n",
-					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				sprintf(outputFileStr, "(Joint (sensor %d) (user %d) (joint %d) (x %f) (y %f) (z %f) (ox1 %f) (ox2 %f) (ox3 %f) (oy1 %f) (oy2 %f) (oy3 %f) (oz1 %f) (oz2 %f) (oz3 %f) (confidence_orientation %f) (confidence %f) (time %f))\n",
+					0, userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					jointTrans.orientation.orientation.elements[0],
 					jointTrans.orientation.orientation.elements[1],
 					jointTrans.orientation.orientation.elements[2],
@@ -625,8 +627,8 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 					posConfidence,
 					time);
 			} else {
-				sprintf(outputFileStr, "(Joint (user %d) (joint %d) (x %f) (y %f) (z %f) (confidence %f) (time %f))\n",
-					userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
+				sprintf(outputFileStr, "(Joint (sensor %d) (user %d) (joint %d) (x %f) (y %f) (z %f) (confidence %f) (time %f))\n",
+					0, userID, eJoint, realwordPoint.X, realwordPoint.Y, realwordPoint.Z,
 					posConfidence,
 					time);
 			}
@@ -660,9 +662,9 @@ int jointPos(XnUserID player, XnSkeletonJoint eJoint) {
 #endif
 				if (debugCSV) {
 					if (sendOrient) {
-						outputFile << "Joint,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
+						outputFile << "Joint,sensor,user,joint,x,y,z,ox1,ox2,ox3,oy1,oy2,oy3,oz1,oz2,oz3,confidence_orientation,confidence,time\n";
 					} else {
-						outputFile << "Joint,user,joint,x,y,z,confidence,time\n";
+						outputFile << "Joint,sensor,user,joint,x,y,z,confidence,time\n";
 					}
 				}
 			}
@@ -782,6 +784,7 @@ void genMidasMsg(lo_bundle *bundle, char *name, int buffIndex) {
 	{
 		lo_message msg = lo_message_new();
 		lo_message_add_string(msg, name);
+		lo_message_add_int32(msg, 0); // SensorID
 		lo_message_add_int32(msg, userID);
 
 		for (int i = 0; i < nDimensions; i++)
@@ -890,10 +893,10 @@ void sendHandOSC() {
 	    jointCoords[2] = realwordPoint.Z;
 		
 		if (debugCSV) {
-			sprintf(outputFileStr, "Hand,%f,%f,%f,%f,%f\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
+			sprintf(outputFileStr, "Hand,%f,%f,%f,%f,%f,%f,%f\n", 0, handID, realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
 		}
 		if (debugFacts) {
-			sprintf(outputFileStr, "(Hand (x %f) (y %f) (z %f) (confidence %f) (time %f))\n", realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
+			sprintf(outputFileStr, "(Hand (sensor %d) (hand %d) (x %f) (y %f) (z %f) (confidence %f) (time %f))\n", 0, handID, realwordPoint.X, realwordPoint.Y, realwordPoint.Z, 1, time);
 		}
 		
 		if (debugCSV || debugFacts) {
@@ -901,7 +904,7 @@ void sendHandOSC() {
 				outputFile.open("outputFile.txt");
 				outputFileOpen = true;
 				if (debugCSV) {
-					outputFile << "Hand,x,y,z,confidence,time\n";
+					outputFile << "Hand,sensor,hand,x,y,z,confidence,time\n";
 				}
 			}
 			outputFile << outputFileStr;
@@ -915,6 +918,7 @@ void sendHandOSC() {
 	}
 	
 	lo_message msg = lo_message_new();
+	lo_message_add_int32(msg, 0); // SensorID
 	lo_message_add_int32(msg, handID);
 	for (int i = 0; i < nDimensions; i++)
 		lo_message_add_float(msg, jointCoords[i]);
