@@ -76,9 +76,10 @@ OSC Message format
 The default OSC message format is tailored towards the Midas-Mudra
 framework. The messages will have the following format:
 
-    Address pattern: "/Joint"
-    Type tag: "siffffd"
+    Address pattern: "/joint"
+    Type tag: "siiffffd"
     s: Joint name, check out the full list of joints below.
+    i: The ID of the sensor
     i: The ID of the user.
     f: X coordinate of joint in real world coordinates (centimers)
     f: Y coordinate of joint in real world coordinates (centimers)
@@ -90,8 +91,9 @@ framework. The messages will have the following format:
 The default OSC message format is tailored towards the Midas-Mudra
 framework. The messages will have the following format:
 
-    Address pattern: "/Hand"
-    Type tag: "iffffd"
+    Address pattern: "/hand"
+    Type tag: "iiffffd"
+    i: The ID of the sensor
     i: The ID of the hand.
     f: X coordinate of joint in real world coordinates (centimers)
     f: Y coordinate of joint in real world coordinates (centimers)
